@@ -1,0 +1,27 @@
+{
+    "name": "uw-areifers/uw-cybersec-asset-manager",
+    "description": "A docker based demo environment for teaching students cybersecurity lessons and resolutions within a simple asset tracking application",
+    "minimum-stability": "dev",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Andrew Reifers",
+            "email": "areifers@uw.edu"
+        }
+    ],
+    "require": {
+        "php": "^7.0",
+        "monolog/monolog": "^2.0@dev"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src"
+        }
+    },
+    "scripts": {
+        "run-phpunit": "vendor/bin/phpunit"
+    }
+}
