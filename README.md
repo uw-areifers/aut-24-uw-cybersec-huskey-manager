@@ -1,87 +1,109 @@
-# Week 1 | Getting Started
-Welcome to the UW HusKey Manager! Until now, this password manager has been used internally by you and your team for work-related password management. Your boss has decided that the HusKey Manager could make a great consumer product and would like to make it publicly available by the end of the quarter. You know that in the web application's current state, there are numerous security issues that need to be addressed before the general public can safely use this service. Over the next several weeks, you will apply what you learn in lecture to identify vulnerabilities in this web app, remediate them, and ensure that the web application maintains it's functionality. By the end of the quarter you will be left with a more secure HusKey Manager!
+# Week 2 | MITM
 
-Feel free to use whichever IDE (integrated development environment) you prefer for this course. The teaching team will primarily be using Visual Studio Code during lab section, and all demos and examples in the lab instructions will be shown in VS Code. You can download VS Code [here](https://code.visualstudio.com/Download)!
+Networking plays a pivotal role in the field of cybersecurity, serving as both a critical component and a potential vulnerability. The interconnected nature of modern computer systems underscores the importance of robust networking practices to ensure the integrity, confidentiality, and availability of sensitive information. Cybersecurity professionals heavily rely on network architecture to implement effective defense mechanisms, such as firewalls, intrusion detection and prevention systems, and virtual private networks, to safeguard against unauthorized access and malicious activities. A well-designed and secure network infrastructure enables efficient monitoring and timely response to potential threats, contributing to the overall resilience of an organization's cybersecurity posture. Collaboration and information sharing within the cybersecurity community also heavily depend on effective networking, as it facilitates the dissemination of threat intelligence and the implementation of collective defense strategies. In essence, the strength of cybersecurity measures is intricately linked to the robustness of networking protocols and practices.
 
-## Docker basics
 
-This web application runs in Docker. Docker is a platform for developing and deploying applications within containers. Containers are self-sufficient units that are capable of running an application and all of it's dependencies isolated from the underlying operating system. This is extremely helpful in a development and testing environment as it allows us to run applications regardless of an end user's operating system/machine. Below is some important terminology to use moving forward:
+## Part 1: ARP spoofing
 
-1. **Docker Image:** An image is a standalone executable package that includes everything needed to run a piece of software, including the code, libraries, environment variables, and system tools. 
+For this lab, we will be exploring what information an adversary can extract from your web application in it's current, unencrypted state. In order for you and your group to view each other's network traffic, you will need to perform a [man-in-the-middle](https://www.imperva.com/learn/application-security/man-in-the-middle-attack-mitm/) (MITM) attack. This will allow the victim's network traffic to route through your machine before being sent to the destination network. To do this we will utilize ARP spoofing. Use one of the following tools depending on your OS to perform the attack:
 
-2. **Docker Container:** A container is a running instance of a Docker image and provides an isolated environment for running applications ensuring that they run consistently across different environments. 
 
-3. **Docker Volume:** A volume in Docker is a way to persistently store and manage data that is generated and used by our Docker containers. Volumes also allow us to share data between containers easily. The great thing about using volumes in Docker is that they data inside a volume can remain in that volume even after the container is stopped and removed.
 
-### 1. Deploying the web app with Docker
+- [Windows ARP Spoofing tool](https://github.com/alandau/arpspoof)
 
-1. You will need to install Docker Desktop, which can be downloaded [here](https://www.docker.com/products/docker-desktop/). Follow the installation instructions, and note that you do not need to create a Docker account.
+- [Mac ARP Spoofing tool (bettercap)](https://www.bettercap.org/installation/)
 
-2. Once you have Docker installed and open, cloen this github repo to your local machine.
 
-3. Inside VS Code, open your HusKey Manager folder. We need to create our `.env` file within our HusKey Manager folder. This file will contain the environment variables required for us to deploy our HusKey Manager. 
 
-    Environment variables are user-defined values that will alter the way running processes will behave within a system. For now, we will use environment variables to set the credentials needed to access our MySQL database. Our `.gitignore` file will ignore the `.env` file so that it cannot be pushed up to our remote repository. This is a security measure to ensure that secret information such as the database login info does not get saved to our remote repository where an adversary can view it.
-    
-    Inside VS Code, click File > New File...
+You will also need to know your victim's IP address. Normally, this can be done using other tools such as netcat, however for the sake of ease and time, we can just look at our secondary device to find out it's IP address. Follow the instructions below to perform our man-in-the-middle attack!
 
-    ![Create File](/lab-writeup-imgs/create_file.png)
+### Windows ARP Spoofing:
 
-    Call this new file `.env`. Within this file, copy and paste the following information:
+Once you have `arpspoof.exe` downloaded, we can start using it immediately
+
+1. cd into the directory where you saved the tool:
+    - `cd \path\to\tool\`
+
+2. Once in the appropriate directory, we will run the tool directly from the command line. We must also enter the victim's IP address, and the target IP address.
+    - `.\arpspoof.exe <victim IP>`
+
+3. Let's say that my victim's IP address was `192.168.0.101`, I would enter the following command:
+    - `.\arpspoof.exe 192.168.0.101`
+
+    And I should get the following output:
 
     ```
-    MYSQL_PORT: 3306
-    MYSQL_PASSWORD: supersecretpw
-    MYSQL_DATABASE: password_manager
-    MYSQL_USER: user
-    BUILD_TARGET: backend-php-server
+    PS C:\Users\zacko\Downloads> .\arpspoof.exe 192.168.0.101
+    Resolving victim and target...
+    Redirecting 192.168.0.101 (02:1A:4F:8E:7B:9C) ---> 192.168.0.1 (AC:D1:23:45:67:89)
+            and in the other direction
+    Press Ctrl+C to stop
     ```
 
-3. In your terminal, cd into your HusKey Manager directory. Once inside you can run the following command to deploy your HusKey Manager in Docker:
-    ```
-    docker-compose up --build
-    ```
+4. Once you have finished the lab and want to end the ARP spoof, you can enter `Ctrl+C` to stop the program from running.
 
-    This will pull the docker images from Docker hub and deploy them into containers following the instructions in the `docker-compose.yaml` file.
+### Mac ARP Spoofing:
 
-    To shut down your HusKey Manager, just press `ctrl + c` within your terminal.
+We can utilize bettercap to perform our ARP spoof on macOS. In order to download bettercap, we will need to install Homebrew.
 
-4. We now have our web application running in Docker! You can access it at [http://localhost:80](http://localhost:80). Take a look at the Docker Desktop application. Under Containers, you should see that we have one container running with three separate images:
+Homebrew is a package manager for macOS, and allows us to install packages and software directly from the terminal.
 
-![Docker Container](/lab-writeup-imgs/docker_container.png)
+1. To install Homebrew, enter the following command into your terminal:
+    `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
-Our three images include:
+2. Once Homebrew is installed, we can use it to install bettercap. Enter the following command in your terminal:
+    `brew install bettercap`
 
-- A MySQL server for handling our sql database.
-- An Nginx server to handle static content and acts as a reverse proxy, forwarding our client's requests to the appropriate backend server (in this case our PHP server).
-- A PHP server handles the dynamic content and runs our PHP scripts, executing server-side code and communicates directly with the database.
+4. Enter the following command to perform your ARP spoof against your victim!
+    `sudo bettercap -eval "set arp.spoof.targets <victim IP>; arp.spoof on"`
 
-### Part 2: Using our web application:
-Now that we have our Docker container deployed, and we are able to see our HusKey Manager at [http://localhost:80](http://localhost:80), we can begin exploring everything that it can do!
-
-1. Once on the main page, you will be prompted to login. Since the HusKey Manager is only used by our team, it is much easier if we all use the same login credentials! This way we will never forget our login and can easily see all passwords needed for our work. It is nice to not have to worry about all that security nonsense :) Use the credentials below to login:
-
-```
-username: username
-password: password!
-```
-
-![Create an account](/lab-writeup-imgs/login.png)
-
-2. Now that you have logged in, you should be able to see the HusKey Manager's homepage.
-
-![HusKey Manager Homepage](/lab-writeup-imgs/password_manager_homepage.png)
-
-3. In the top right corner, you will see "Vaults". Click on that to view all password vaults used by your company.
-
-![Password Vaults](/lab-writeup-imgs/password_vaults.png)
-
-4. As you can see, the vaults are divided by department. You can edit the name of the vaults, or delete the vaults entirely. You can also add a new password vault at the top of the page. Click 'View Vault' to see the passwords stored in each vault.
-
-![Developer's Vault](/lab-writeup-imgs/developers_vault.png)
+5. Once you have finished the lab and want to end the ARP spoof, you can enter `Ctrl+C` to stop the program from running.
 
 
-##
-Congratulations on successfully setting up Docker! We will be using this for each lab assignment throughout the quarter. If you run into any issues or have any questions, please don't hesitate to reach out the the teaching team, we are here to help!
+## Part 2: Wireshark
 
-Please refer to the canvas lab assignment page for the rubric and instructions on submitting the write up.
+Now that we have performed our man-in-the-middle attack, we can view all of our victim's network traffic. To do this we will be utilizing [Wireshark](https://www.wireshark.org/), a network traffic analysis tool. Wireshark can allow anyone to view the packets moving across our network. This can pose a serious issue when a web application is not properly utilizing cryptography, allowing any script kiddie to easily view our sensitive data.
+
+
+
+### Instructions:
+
+1. Download Wireshark [here](https://www.wireshark.org/).
+
+2. Once Wireshark is installed, open the application and select the appropriate network interface.
+
+3. Wireshark will now quickly populate with all network packets being sent to and from your victim's computer. While you are monitoring their traffic, have the victim log into their insecure web application. Once they have done so, click the red button at the top of Wireshark to stop recording their network traffic.
+
+
+
+    ![Stop wireshark](/lab-writeup-imgs/stop_wireshark.png)
+
+
+
+3. In the text field at the top of the application, you will see "Apply a display filter", this is where you can set filters to easily sort through your traffic.
+
+    ![Highlighted filter bar](/lab-writeup-imgs/wireshark_filter_bar.png)
+
+
+
+    The easiest way to begin filtering through traffic is to select any packet in wireshark, right-click the attribute of interest, and Apply as Filter. We can change the value of that filter later, but this way we can ensure we have proper syntax for filtering in wireshark. Below is an example of us applying the source address as our filter:
+
+
+
+    ![Applying source filter](/lab-writeup-imgs/apply_src_filter.png)
+
+4. We can now edit the filter to match the source IP address with the victim we were ARP spoofing:
+
+    ![Editing filter](/lab-writeup-imgs/edit_filter.png)
+
+5. Now that we are filtering to see traffic from our victim's IP address, let's also sort the packets by protocol. We know that the victim connected to the unencrypted site of HTTP, so we can look for packets that used that protocol:
+
+    ![Sorting by protocol](/lab-writeup-imgs/sort_protocol.png)
+
+6. Look through these packets and see what information you can gather. Below we can see a packet using the POST header to login. Upon further inspection we can see the victim's login credentials in clear text!
+
+    ![Login credentials](/lab-writeup-imgs/login_credentials.png)
+
+## For Credit
+
+Congratulations on performing your first man-in-the-middle attack. This means that you are officially an iSchool script kiddie (you can update your LinkedIn accordingly :) ). For this lab write up, please use the template found on the canvas page following the rubric listed for the assignment. At the top of the writeup include the names of the people you worked with to complete this lab.
